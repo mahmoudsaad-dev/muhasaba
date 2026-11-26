@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>محاسبة النفس</title>
+<style>
+  :root {
+    --bg: #0e1a14;
+    --card: #16241c;
+    --card2: #1d3125;
+    --accent: #3fbf72;
+    --accent2: #ffd166;
+    --text: #eef5f0;
+    --muted: #8fae9c;
+    --danger: #e26d5a;
+  }
+  body.light {
+    --bg: #f2f6f0;
+    --card: #ffffff;
+    --card2: #e7efe6;
+    --text: #1d2b22;
+    --muted: #5d7a68;
+  }
+  body.golden {
+    --bg: #1a150e;
+    --card: #241d16;
+    --card2: #31281d;
+    --accent: #d9a441;
+    --accent2: #7fd6a4;
+    --text: #f5efe4;
+    --muted: #b3a68c;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; }
+  body {
+    font-family: "Segoe UI", "Noto Kufi Arabic", "Cairo", Tahoma, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    transition: background .3s, color .3s;
+    overflow-x: hidden;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; min-height: 100%; padding: 16px 16px 90px; }
+
+  /* Header */
+  header { text-align:center; padding: 18px 0 8px; }
+  header .basmala { color: var(--accent2); font-size: 15px; letter-spacing: .5px; }
+  header h1 { font-size: 24px; margin-top: 6px; }
+  header .date { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  .stats { display:flex; gap:10px; margin: 14px 0; }
+  .stat {
+    flex:1; background: var(--card); border-radius: 16px; padding: 12px;
+    text-align:center; box-shadow: 0 2px 10px rgba(0,0,0,.15);
+  }
+  .stat .num { font-size: 22px; font-weight: 700; }
+  .stat .lbl { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .stat.hot .num { color: var(--accent2); }
+
+  .progress {
+    background: var(--card); border-radius: 14px; padding: 12px 14px; margin-bottom: 16px;
+  }
+  .progress .row { display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px; }
+  .progress .row .pts { color: var(--accent); font-weight:700; }
+  .bar { height: 10px; border-radius: 99px; background: var(--card2); overflow:hidden; }
+  .bar > div {
+    height:100%; width:0%; border-radius:99px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width .5s ease;
+  }
+
+  /* Tasks */
+  .task {
+    display:flex; align-items:center; gap:12px;
+    background: var(--card); border-radius: 16px; padding: 14px;
+    margin-bottom: 10px; cursor:pointer; user-select:none;
+    transition: transform .1s, background .2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,.12);
+  }
+  .task:active { transform: scale(.98); }
+  .task .icon { font-size: 24px; width: 38px; text-align:center; }
+  .task .body { flex:1; }
+  .task .name { font-size: 16px; font-weight:600; }
+  .task .pts { font-size: 12px; color: var(--accent); font-weight:700; }
+  .task .check {
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 2px solid var(--muted);
+    display:flex; align-items:center; justify-content:center;
+    font-size: 16px; color: transparent; transition: all .2s;
+    flex-shrink: 0;
+  }
+  .task.done { background: var(--card2); }
+  .task.done .check { background: var(--accent); border-color: var(--accent); color:#fff; }
+  .task.done .name { color: var(--muted); text-decoration: line-through; }
+
+  .msg { text-align:center; color: var(--accent2); font-size: 14px; min-height: 22px; margin: 6px 0; }
+
+  /* Tabs */
+  nav {
+    position: fixed; bottom:0; left:0; right:0;
+    background: var(--card); border-top: 1px solid var(--card2);
+    display:flex; z-index: 10;
+  }
+  nav button {
+    flex:1; background:none; border:none; color: var(--muted);
+    padding: 12px 0 14px; font-size: 12px; font-family: inherit;
+    display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer;
+  }
+  nav button .i { font-size: 20px; }
+  nav button.active { color: var(--accent); }
+
+  .page { display:none; animation: fade .25s; }
+  .page.active { display:block; }
+  @keyframes fade { from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
+
+  /* Garden */
+  .garden {
+    background: linear-gradient(180deg, var(--card) 0%, var(--card2) 100%);
+    border-radius: 20px; padding: 20px 14px; text-align:center; min-height: 320px;
+  }
+  .garden .trees { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; font-size: 40px; line-height:1.4; }
+  .garden .trees span { display:inline-block; animation: pop .4s; }
+  @keyframes pop { from{transform:scale(0);} to{transform:scale(1);} }
+  .garden .hint { color: var(--muted); font-size: 13px; margin-top: 14px; }
+  .garden .stage { font-size: 15px; margin-top: 8px; color: var(--accent2); }
+
+  /* Store */
+  .item {
+    display:flex; align-items:center; gap:12px;
+    background: var(--card); border-radius: 16px; padding: 14px; margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.12);
+  }
+  .item .icon { font-size: 26px; width: 40px; text-align:center; }
+  .item .body { flex:1; }
+  .item .name { font-size: 15px; font-weight: 600; }
+  .item .desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .item button {
+    background: var(--accent); color:#fff; border:none; border-radius: 99px;
+    padding: 8px 14px; font-size: 13px; font-weight:700; font-family:inherit; cursor:pointer;
+    white-space: nowrap;
+  }
+  .item button:disabled { background: var(--card2); color: var(--muted); }
+  .item button.owned { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+
+  /* Modal */
+  .modal-bg {
+    position: fixed; inset:0; background: rgba(0,0,0,.6);
+    display:none; align-items:center; justify-content:center; z-index: 20; padding: 20px;
+  }
+  .modal-bg.show { display:flex; }
+  .modal {
+    background: var(--card); border-radius: 20px; padding: 22px;
+    max-width: 400px; width:100%; max-height: 75vh; overflow-y:auto;
+  }
+  .modal h3 { margin-bottom: 12px; color: var(--accent2); }
+  .modal p, .modal li { font-size: 14px; line-height: 1.9; color: var(--text); }
+  .modal ul { padding-right: 18px; }
+  .modal .close {
+    margin-top: 16px; width:100%; background: var(--accent); color:#fff;
+    border:none; border-radius: 12px; padding: 12px; font-size: 15px;
+    font-weight:700; font-family:inherit; cursor:pointer;
+  }
+
+  .confetti { position: fixed; top:-10px; font-size: 20px; z-index: 30; pointer-events:none; animation: fall 2.2s linear forwards; }
+  @keyframes fall { to { transform: translateY(105vh) rotate(360deg); opacity: .4; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="basmala">بسم الله الرحمن الرحيم</div>
+    <h1>محاسبة النفس</h1>
+    <div class="date" id="dateLine"></div>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="num" id="todayPts">0</div><div class="lbl">نقاط اليوم</div></div>
+    <div class="stat hot"><div class="num" id="streak">0 🔥</div><div class="lbl">أيام متتالية</div></div>
+    <div class="stat"><div class="num" id="wallet">0</div><div class="lbl">رصيدك</div></div>
+  </div>
+
+  <div id="page-today" class="page active">
+    <div class="progress">
+      <div class="row"><span>هدف اليوم</span><span class="pts" id="progTxt">0 / 30</span></div>
+      <div class="bar"><div id="progBar"></div></div>
+    </div>
+    <div class="msg" id="dayMsg"></div>
+    <div id="taskList"></div>
+  </div>
+
+  <div id="page-garden" class="page">
+    <div class="garden">
+      <div class="trees" id="trees"></div>
+      <div class="stage" id="gardenStage"></div>
+      <div class="hint" id="gardenHint"></div>
+    </div>
+  </div>
+
+  <div id="page-store" class="page">
+    <div id="storeList"></div>
+  </div>
+
+</div>
+
+<nav>
+  <button class="active" data-page="page-today"><span class="i">✅</span>اليوم</button>
+  <button data-page="page-garden"><span class="i">🌳</span>حديقتي</button>
+  <button data-page="page-store"><span class="i">🛍️</span>المتجر</button>
+</nav>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal" id="modalBox"></div>
+</div>
+
+<script>
+// ============ Data model ============
+var TASKS = [
+  {id:'fajr',   name:'صلاة الفجر',   icon:'🌅', pts:4},
+  {id:'dhuhr',  name:'صلاة الظهر',   icon:'☀️', pts:3},
+  {id:'asr',    name:'صلاة العصر',   icon:'🌤️', pts:3},
+  {id:'maghrib',name:'صلاة المغرب',  icon:'🌇', pts:3},
+  {id:'isha',   name:'صلاة العشاء',  icon:'🌙', pts:3},
+  {id:'adhkar_s',name:'أذكار الصباح', icon:'📿', pts:4},
+  {id:'adhkar_m',name:'أذكار المساء', icon:'🕯️', pts:4},
+  {id:'quran',  name:'الورد اليومي من القرآن', icon:'📖', pts:4},
+  {id:'witr',   name:'صلاة الوتر',    icon:'⭐', pts:2}
+];
+var MAX_DAY = 30;
+
+var STORE = [
+  {id:'shield', icon:'🛡️', name:'درع الاستمرارية', desc:'يحمي سلسلة أيامك مرة واحدة لو فاتك يوم', cost:50, type:'consumable'},
+  {id:'tree',   icon:'🌲', name:'ازرع شجرة إضافية', desc:'شجرة جديدة في حديقتك فورًا', cost:40, type:'consumable'},
+  {id:'adhkar', icon:'📿', name:'حصن المسلم المختصر', desc:'فتح قائمة أذكار الصباح والمساء داخل التطبيق', cost:20, type:'unlock'},
+  {id:'theme_light', icon:'🌞', name:'المظهر الفاتح', desc:'تغيير شكل التطبيق للوضع النهاري', cost:30, type:'theme'},
+  {id:'theme_golden', icon:'🏵️', name:'المظهر الذهبي', desc:'مظهر ذهبي فاخر', cost:60, type:'theme'}
+];
+
+var ADHKAR_CONTENT = '<h3>أذكار الصباح</h3><ul>' +
+  '<li>آية الكرسي (مرة)</li><li>الإخلاص والمعوذتين (3 مرات)</li>' +
+  '<li>أصبحنا وأصبح الملك لله... (مرة)</li><li>اللهم بك أصبحنا وبك أمسينا... (مرة)</li>' +
+  '<li>سيد الاستغفار (مرة)</li><li>سبحان الله وبحمده (100 مرة)</li>' +
+  '<li>لا إله إلا الله وحده لا شريك له... (10 مرات)</li></ul>' +
+  '<h3 style="margin-top:14px">أذكار المساء</h3><ul>' +
+  '<li>آية الكرسي (مرة)</li><li>الإخلاص والمعوذتين (3 مرات)</li>' +
+  '<li>أمسينا وأمسى الملك لله... (مرة)</li><li>اللهم بك أمسينا وبك أصبحنا... (مرة)</li>' +
+  '<li>أعوذ بكلمات الله التامات من شر ما خلق (3 مرات)</li>' +
+  '<li>سبحان الله وبحمده (100 مرة)</li></ul>';
+
+// ============ State ============
+function todayKey(){ var d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function load(k, def){ try{ var v=localStorage.getItem('muhasaba_'+k); return v===null?def:JSON.parse(v); }catch(e){ return def; } }
+function save(k, v){ localStorage.setItem('muhasaba_'+k, JSON.stringify(v)); }
+
+var state = load('state', {
+  wallet: 0, lifetime: 0, streak: 0, bestStreak: 0,
+  shields: 0, extraTrees: 0, owned: [], theme: 'dark',
+  lastDay: null
+});
+var done = load('day_'+todayKey(), {});
+
+function dayPoints(){ var p=0; for(var i=0;i<TASKS.length;i++){ if(done[TASKS[i].id]) p+=TASKS[i].pts; } return Math.min(p, MAX_DAY); }
+
+// Streak engine: runs once per app open
+function settleStreak(){
+  var today = todayKey();
+  if(state.lastDay === today) return;
+  // count back from yesterday
+  var missed = 0, d = new Date();
+  d.setDate(d.getDate()-1);
+  while(true){
+    var k = d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+    var dd = load('day_'+k, null);
+    var pts = 0;
+    if(dd){ for(var i=0;i<TASKS.length;i++){ if(dd[TASKS[i].id]) pts+=TASKS[i].pts; } pts=Math.min(pts,MAX_DAY); }
+    if(pts >= 10){ break; }        // a qualifying day
+    if(dd === null && k === state.lastDay){ break; } // never opened that day, stop anyway
+    missed++;
+    if(missed > 1) break;
+    d.setDate(d.getDate()-1);
+  }
+  if(missed > 0){
+    if(state.shields > 0){
+      state.shields--; // shield absorbs the gap
+      toast('🛡️ درع الاستمرارية حمى سلسلتك!');
+    } else {
+      state.streak = 0;
+    }
+  }
+  state.lastDay = today;
+  save('state', state);
+}
+
+function bumpStreakIfQualified(){
+  // first time today reaching 10 points advances the streak
+  if(state['streakCounted_'+todayKey()]) return;
+  if(dayPoints() >= 10){
+    state.streak++;
+    if(state.streak > state.bestStreak) state.bestStreak = state.streak;
+    state['streakCounted_'+todayKey()] = true;
+    save('state', state);
+    celebrate('🔥 ' + state.streak + ' أيام متتالية!');
+  }
+}
+
+// ============ Rendering ============
+function fmtDate(){
+  var days=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  var months=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  var d=new Date();
+  return days[d.getDay()] + '، ' + d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+}
+
+function render(){
+  var p = dayPoints();
+  document.getElementById('todayPts').textContent = p;
+  document.getElementById('streak').textContent = state.streak + ' 🔥';
+  document.getElementById('wallet').textContent = state.wallet;
+  document.getElementById('dateLine').textContent = fmtDate();
+  document.getElementById('progTxt').textContent = p + ' / ' + MAX_DAY;
+  document.getElementById('progBar').style.width = Math.round(p/MAX_DAY*100) + '%';
+  document.getElementById('dayMsg').textContent =
+    p >= MAX_DAY ? 'ما شاء الله! يوم كامل، تقبّل الله 🤍' :
+    p >= 20 ? 'قربت توصل للهدف، أكمل!' :
+    p >= 10 ? 'بداية جميلة، استمر' : '';
+
+  var html = '';
+  for(var i=0;i<TASKS.length;i++){
+    var t = TASKS[i], isDone = !!done[t.id];
+    html += '<div class="task'+(isDone?' done':'')+'" data-id="'+t.id+'">' +
+      '<div class="icon">'+t.icon+'</div>' +
+      '<div class="body"><div class="name">'+t.name+'</div><div class="pts">+'+t.pts+' نقاط</div></div>' +
+      '<div class="check">✔</div></div>';
+  }
+  document.getElementById('taskList').innerHTML = html;
+
+  renderGarden();
+  renderStore();
+  applyTheme();
+}
+
+function renderGarden(){
+  var earnedTrees = Math.floor(state.lifetime / 30);
+  var total = earnedTrees + state.extraTrees;
+  var stages = ['🌱','🌿','🪴','🌳'];
+  var html = '';
+  if(total === 0){
+    html = '<div style="font-size:52px">🌱</div>';
+    document.getElementById('gardenStage').textContent = 'حديقتك لسه بذرة';
+    document.getElementById('gardenHint').textContent = 'كل 30 نقطة تكسبها تزرع شجرة جديدة. ابدأ اليوم!';
+  } else {
+    var species = ['🌳','🌲','🌴','🎋','🌵','🍀'];
+    for(var i=0;i<Math.min(total,48);i++){
+      html += '<span>'+species[i % species.length]+'</span>';
+    }
+    var next = 30 - (state.lifetime % 30);
+    document.getElementById('gardenStage').textContent = 'عندك ' + total + ' شجرة 🌳';
+    document.getElementById('gardenHint').textContent = next + ' نقطة وتزرع الشجرة رقم ' + (total+1);
+  }
+  document.getElementById('trees').innerHTML = html;
+}
+
+function renderStore(){
+  var html = '';
+  for(var i=0;i<STORE.length;i++){
+    var s = STORE[i];
+    var owned = state.owned.indexOf(s.id) !== -1;
+    var btn;
+    if(s.type === 'consumable'){
+      var count = s.id==='shield' ? state.shields : state.extraTrees;
+      btn = '<button data-buy="'+s.id+'" '+(state.wallet>=s.cost?'':'disabled')+'>'+s.cost+' نقطة</button>';
+      if(count>0) s.desc += ' (عندك: '+count+')';
+    } else if(owned){
+      btn = s.type==='theme'
+        ? '<button class="owned" data-theme="'+s.id+'">استخدم</button>'
+        : '<button class="owned" data-open="'+s.id+'">افتح</button>';
+    } else {
+      btn = '<button data-buy="'+s.id+'" '+(state.wallet>=s.cost?'':'disabled')+'>'+s.cost+' نقطة</button>';
+    }
+    html += '<div class="item"><div class="icon">'+s.icon+'</div>' +
+      '<div class="body"><div class="name">'+s.name+'</div><div class="desc">'+s.desc+'</div></div>' +
+      btn + '</div>';
+  }
+  document.getElementById('storeList').innerHTML = html;
+}
+
+function applyTheme(){
+  document.body.className = state.theme === 'light' ? 'light' : state.theme === 'golden' ? 'golden' : '';
+}
+
+// ============ Actions ============
+function celebrate(text){
+  var em = ['🎉','✨','🌟','💚','🤍'];
+  for(var i=0;i<14;i++){
+    var c = document.createElement('div');
+    c.className = 'confetti';
+    c.textContent = em[i % em.length];
+    c.style.left = Math.random()*95 + 'vw';
+    c.style.animationDelay = (Math.random()*0.6) + 's';
+    document.body.appendChild(c);
+    (function(el){ setTimeout(function(){ el.remove(); }, 2800); })(c);
+  }
+  if(text){ document.getElementById('dayMsg').textContent = text; }
+}
+
+function toast(t){ document.getElementById('dayMsg').textContent = t; }
+
+function toggleTask(id){
+  var wasDone = !!done[id];
+  done[id] = !wasDone;
+  save('day_'+todayKey(), done);
+  if(!wasDone){
+    var t = TASKS.filter(function(x){return x.id===id;})[0];
+    state.wallet += t.pts;
+    state.lifetime += t.pts;
+    if(dayPoints() >= MAX_DAY){ celebrate('يوم كامل! تقبّل الله منك 🤍'); }
+    bumpStreakIfQualified();
+  } else {
+    var t2 = TASKS.filter(function(x){return x.id===id;})[0];
+    state.wallet = Math.max(0, state.wallet - t2.pts);
+    state.lifetime = Math.max(0, state.lifetime - t2.pts);
+  }
+  save('state', state);
+  render();
+}
+
+function buy(id){
+  var s = STORE.filter(function(x){return x.id===id;})[0];
+  if(!s || state.wallet < s.cost) return;
+  if(s.type !== 'consumable' && state.owned.indexOf(id) !== -1) return;
+  state.wallet -= s.cost;
+  if(s.id === 'shield'){ state.shields++; toast('🛡️ تم! درعك جاهز لو فاتك يوم'); }
+  else if(s.id === 'tree'){ state.extraTrees++; toast('🌲 زرعت شجرة جديدة!'); celebrate(); }
+  else { state.owned.push(id); toast('تم الفتح ✨'); }
+  save('state', state);
+  render();
+}
+
+function openModal(html){
+  document.getElementById('modalBox').innerHTML = html + '<button class="close" id="modalClose">حسنًا</button>';
+  document.getElementById('modalBg').classList.add('show');
+}
+function closeModal(){ document.getElementById('modalBg').classList.remove('show'); }
+
+// ============ Events ============
+document.addEventListener('click', function(e){
+  var task = e.target.closest('.task');
+  if(task){ toggleTask(task.getAttribute('data-id')); return; }
+
+  var buyBtn = e.target.closest('[data-buy]');
+  if(buyBtn && !buyBtn.disabled){ buy(buyBtn.getAttribute('data-buy')); return; }
+
+  var themeBtn = e.target.closest('[data-theme]');
+  if(themeBtn){
+    var th = themeBtn.getAttribute('data-theme');
+    state.theme = th === 'theme_light' ? 'light' : th === 'theme_golden' ? 'golden' : 'dark';
+    save('state', state); applyTheme(); return;
+  }
+
+  var openBtn = e.target.closest('[data-open]');
+  if(openBtn && openBtn.getAttribute('data-open') === 'adhkar'){ openModal(ADHKAR_CONTENT); return; }
+
+  if(e.target.id === 'modalClose' || e.target.id === 'modalBg'){ closeModal(); return; }
+
+  var navBtn = e.target.closest('nav button');
+  if(navBtn){
+    var btns = document.querySelectorAll('nav button');
+    for(var i=0;i<btns.length;i++) btns[i].classList.remove('active');
+    navBtn.classList.add('active');
+    var pages = document.querySelectorAll('.page');
+    for(var j=0;j<pages.length;j++) pages[j].classList.remove('active');
+    document.getElementById(navBtn.getAttribute('data-page')).classList.add('active');
+  }
+});
+
+// ============ Cloud sync (Vercel backend) ============
+var API_BASE = ''; // deployed backend URL, same origin when hosted on Vercel
+
+function deviceId(){
+  var id = load('deviceId', null);
+  if(!id){ id = 'd-' + Math.random().toString(36).slice(2) + Date.now().toString(36); save('deviceId', id); }
+  return id;
+}
+
+function pushState(){
+  if(!API_BASE || API_BASE.indexOf('__') === 0) return;
+  try{
+    fetch(API_BASE + '/api/sync', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({deviceId: deviceId(), state: state})
+    }).catch(function(){});
+  }catch(e){}
+}
+
+function pullState(){
+  if(!API_BASE || API_BASE.indexOf('__') === 0) return;
+  try{
+    fetch(API_BASE + '/api/sync?deviceId=' + encodeURIComponent(deviceId()))
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(d && d.state && (d.state.serverUpdatedAt||0) > (state.serverUpdatedAt||0)){
+          var localDay = done; // keep today's checklist local
+          state = d.state;
+          save('state', state);
+          done = localDay;
+          render();
+        }
+      }).catch(function(){});
+  }catch(e){}
+}
+
+function loadAyah(){
+  if(!API_BASE || API_BASE.indexOf('__') === 0) return;
+  try{
+    fetch(API_BASE + '/api/ayah')
+      .then(function(r){ return r.json(); })
+      .then(function(a){
+        if(a && a.text){ document.getElementById('dayMsg').textContent = a.text + ' (' + a.source + ')'; }
+      }).catch(function(){});
+  }catch(e){}
+}
+
+// wrap save() so every state change syncs
+var _save = save;
+save = function(k, v){ _save(k, v); if(k === 'state') pushState(); };
+
+// ============ Init ============
+settleStreak();
+applyTheme();
+render();
+pullState();
+loadAyah();
+</script>
+</body>
+</html>
